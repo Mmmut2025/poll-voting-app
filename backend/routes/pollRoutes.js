@@ -13,12 +13,19 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
   res.json(poll);
 });
 
+
 // Get open polls
 router.get('/', authMiddleware, async (req, res) => {
   const polls = await Poll.find({ isClosed: false, closingDate: { $gte: new Date() } });
   res.json(polls);
 });
 
+// View results
+router.get('/admin/all', authMiddleware, async (req, res) => {
+  console.log("Inside /admin/all");
+  const poll = await Poll.find();
+  res.json(poll);
+});
 
 // Get open polls
 router.get('/:pollId', authMiddleware, async (req, res) => {
@@ -47,17 +54,43 @@ router.get('/results/:pollId', authMiddleware, async (req, res) => {
   res.json(poll.options);
 });
 
-// View results
-router.get('/admin', authMiddleware, async (req, res) => {
-  const poll = await Poll.find();
-  console.log("polls",poll);
-  res.json(poll);
-});
-
 // Admin: Close poll manually
 router.patch('/close/:pollId', authMiddleware, adminMiddleware, async (req, res) => {
   const poll = await Poll.findByIdAndUpdate(req.params.pollId, { isClosed: true });
   res.send('Poll closed');
+});
+
+// update Poll
+router.put('/:pollId', authMiddleware, adminMiddleware, async (req, res) => {
+  console.log('req',req.params.pollId)
+  const { question, options, closingDate } = req.body;
+  if (options.length < 2) return res.status(400).send('At least 2 options required');
+  const poll = await Poll.findById(req.params.pollId);
+    if (!poll) return res.status(404).json({ error: 'Poll not found' });
+
+    // Update fields
+    poll.question = question;
+    poll.options = options;
+    poll.closingDate = closingDate;
+
+    await poll.save();
+    res.json(poll);
+});
+
+// delete 
+router.delete('/:pollId', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const poll = await Poll.findByIdAndDelete(req.params.pollId);
+
+    if (!poll) {
+      return res.status(404).json({ error: 'Poll not found' });
+    }
+
+    res.json({ message: 'Poll deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error while deleting poll' });
+  }
 });
 
 module.exports = router;

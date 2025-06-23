@@ -22,7 +22,7 @@ router.get('/', authMiddleware, async (req, res) => {
 
 // Get open polls
 router.get('/:pollId', authMiddleware, async (req, res) => {
-  const polls = await Poll.findById(req.params.pollId);
+  const polls = await Poll.find(req.params.pollId);
   res.json(polls);
 });
 
@@ -48,11 +48,11 @@ router.get('/results/:pollId', authMiddleware, async (req, res) => {
 });
 
 // View results
-router.get('/admin', authMiddleware, async (req, res) => {
-  const poll = await Poll.find();
-  console.log("polls",poll);
-  res.json(poll);
-});
+    router.get('/admin', authMiddleware, async (req, res) => {
+    const poll = await Poll.find();
+    console.log("polls",poll);
+    res.json(poll);
+    });
 
 // Admin: Close poll manually
 router.patch('/close/:pollId', authMiddleware, adminMiddleware, async (req, res) => {

@@ -40,7 +40,7 @@ const EditPollPage = () => {
     e.preventDefault();
     try {
       await API.put(`/polls/${id}`, {
-        question,   
+        question,
          options: options.filter(opt => opt.trim()).map(opt => ({ text: opt })),
         closingDate,
       });

@@ -41,7 +41,7 @@ const EditPollPage = () => {
     try {
       await API.put(`/polls/${id}`, {
         question,   
-        options: options.filter((opt) => opt.trim()),
+         options: options.filter(opt => opt.trim()).map(opt => ({ text: opt })),
         closingDate,
       });
       alert('Poll updated successfully');

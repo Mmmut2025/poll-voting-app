@@ -22,8 +22,8 @@ const CreatePollPage = () => {
     e.preventDefault();
     try {
       await API.post('/polls', {
-        question,
-         options: options.filter(opt => opt.trim()).map(opt => ({ text: opt })),
+        question: question.trim(),
+        options: validOptions.map(opt => ({ text: opt.trim() })),
         closingDate,
       });
       alert('Poll created successfully');

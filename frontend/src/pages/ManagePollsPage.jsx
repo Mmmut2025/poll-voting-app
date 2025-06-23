@@ -12,7 +12,7 @@ const ManagePollsPage = () => {
 
   const fetchPolls = async () => {
     try {
-      const res = await API.get('/polls/admin');
+      const res = await API.get('/polls/admin/all');
       setPolls(res.data);
     } catch (err) {
       alert('Failed to load polls');

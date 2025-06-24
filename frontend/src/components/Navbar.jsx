@@ -65,7 +65,7 @@ const Navbar = () => {
             color: 'white',
           }}
         >
-          🗳️ Poll & Voting App
+          Polling Result Here
         </h1>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px' }}>

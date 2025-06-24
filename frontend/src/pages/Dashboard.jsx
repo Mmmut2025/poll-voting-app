@@ -52,7 +52,7 @@ const Dashboard = () => {
   return (
     <div style={containerStyle}>
       <h2 style={headingStyle}>
-        Welcome, {user?.email || 'Guest'}
+        Welcome, {user?.email || 'Guest You are Not Authorized'}
       </h2>
 
       {user && user.role === 'Admin' && (

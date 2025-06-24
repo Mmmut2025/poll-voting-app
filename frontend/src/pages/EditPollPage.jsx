@@ -47,7 +47,7 @@ const EditPollPage = () => {
       alert('Poll updated successfully');
       navigate('/dashboard');
     } catch (err) {
-      alert('Failed to update poll');
+      alert('Failed to update poll because you are not authorized');
     }
   };
 
@@ -58,7 +58,7 @@ const EditPollPage = () => {
         alert('Poll deleted successfully');
         navigate('/dashboard');
       } catch (err) {
-        alert('Failed to delete poll');
+        alert('Failed to delete poll because you are not authorized');
       }
     }
   };

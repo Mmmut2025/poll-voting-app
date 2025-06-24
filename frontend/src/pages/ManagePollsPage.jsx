@@ -15,7 +15,7 @@ const ManagePollsPage = () => {
       const res = await API.get('/polls/admin/all');
       setPolls(res.data);
     } catch (err) {
-      alert('Failed to load polls');
+      alert('Failed to load polls , it may be you are not authorized ');
     }
   };
 
@@ -26,7 +26,7 @@ const ManagePollsPage = () => {
         fetchPolls();
         alert('Poll deleted');
       } catch (err) {
-        alert('Failed to delete poll');
+        alert('Failed to delete poll , it may be you are not authorized');
       }
     }
   };

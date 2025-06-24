@@ -19,19 +19,33 @@ const CreatePollPage = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await API.post('/polls', {
-        question: question.trim(),
-        options: validOptions.map(opt => ({ text: opt.trim() })),
-        closingDate,
-      });
-      alert('Poll created successfully');
-      navigate('/dashboard');
-    } catch (err) {
-      alert('Failed to create poll');
-    }
-  };
+  e.preventDefault();
+
+  const cleanedOptions = options
+    .map((opt) => opt.trim())
+    .filter((opt) => opt.length > 0)
+    .map((opt) => ({ text: opt }));
+
+  if (cleanedOptions.length < 2) {
+    alert('Please provide at least 2 valid options.');
+    return;
+  }
+
+  try {
+    await API.post('/polls', {
+      question: question.trim(),
+      options: cleanedOptions,
+      closingDate,
+    });
+
+    alert('Poll created successfully');
+    navigate('/dashboard');
+  } catch (err) {
+    alert('Failed to create poll');
+    console.error('Poll creation error:', err);
+  }
+};
+
 
   // Inline styles
   const containerStyle = {

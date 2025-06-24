@@ -36,24 +36,26 @@ const Dashboard = () => {
 
   const createButtonStyle = {
     ...buttonStyle,
-    backgroundColor: '#2563eb', // blue
+    backgroundColor: '#2563eb',
   };
 
   const manageButtonStyle = {
     ...buttonStyle,
-    backgroundColor: '#9333ea', // purple
+    backgroundColor: '#9333ea',
   };
 
   const voteButtonStyle = {
     ...buttonStyle,
-    backgroundColor: '#16a34a', // green
+    backgroundColor: '#16a34a',
   };
 
   return (
     <div style={containerStyle}>
-      <h2 style={headingStyle}>Welcome, {user?.email}</h2>
+      <h2 style={headingStyle}>
+        Welcome, {user?.email || 'Guest'}
+      </h2>
 
-      {user?.role === 'Admin' ? (
+      {user && user.role === 'Admin' && (
         <div>
           <button
             style={createButtonStyle}
@@ -72,14 +74,16 @@ const Dashboard = () => {
             Manage Polls
           </button>
         </div>
-      ) : (
+      )}
+
+      {user && user.role !== 'Admin' && (
         <button
           style={voteButtonStyle}
-          onClick={() => navigate('/polls')}
+          onClick={() => navigate('/polls/closed')}
           onMouseOver={(e) => (e.target.style.backgroundColor = '#15803d')}
           onMouseOut={(e) => (e.target.style.backgroundColor = '#16a34a')}
         >
-          View & Vote on Polls
+          View Result Polls
         </button>
       )}
     </div>

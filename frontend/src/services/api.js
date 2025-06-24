@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:5000/api', // ✅ Adjust if backend runs on a different port or domain
+  baseURL: 'http://15.206.203.217:5000/api', // ✅ Adjust if backend runs on a different port or domain
 });
 
 // ✅ Attach token to every request

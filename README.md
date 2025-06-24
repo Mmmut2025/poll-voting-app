@@ -59,7 +59,7 @@ Tailwind CSS / Inline CSS:- 	For responsive and clean UI without external CSS fi
 
 
 API endpoints list with HTTP method, route, and purpose:-
-//For Login
+//For SignUp
 router.post('/signup', async (req, res) => {
   const { name, email, password, role } = req.body;
   const hashed = await bcrypt.hash(password, 10);
@@ -69,7 +69,7 @@ router.post('/signup', async (req, res) => {
   res.send('User registered');
 });
 
-//For Logout
+//For Login
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
@@ -80,6 +80,12 @@ router.post('/login', async (req, res) => {
   res.json({ token, role: user.role });
 });
 
+
+const express = require('express');
+const Poll = require('../models/Poll');
+const { authMiddleware, adminMiddleware } = require('../middleware/authMiddleware');
+
+const router = express.Router();
 
 // ===================== ADMIN Routes ===================== //
 
@@ -98,21 +104,41 @@ router.get('/admin/all', authMiddleware, adminMiddleware, async (req, res) => {
   res.json(polls);
 });
 
-//  Update a poll (Admin only)
+
+// Update a poll (Only by the admin who created it)
 router.put('/:pollId', authMiddleware, adminMiddleware, async (req, res) => {
   const { question, options, closingDate } = req.body;
-  if (options.length < 2) return res.status(400).send('At least 2 options required');
 
-  const poll = await Poll.findById(req.params.pollId);
-  if (!poll) return res.status(404).json({ error: 'Poll not found' });
+  if (options.length < 2) {
+    return res.status(400).send('At least 2 options required');
+  }
 
-  poll.question = question;
-  poll.options = options;
-  poll.closingDate = closingDate;
+  try {
+    const poll = await Poll.findById(req.params.pollId);
 
-  await poll.save();
-  res.json(poll);
+    if (!poll) {
+      return res.status(404).json({ error: 'Poll not found' });
+    }
+
+    // Check if the logged-in admin is the one who created the poll
+    if (poll.createdBy.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'You are not authorized to update this poll' });
+    }
+
+    // Update fields
+    poll.question = question;
+    poll.options = options;
+    poll.closingDate = closingDate;
+
+    await poll.save();
+    res.json(poll);
+
+  } catch (err) {
+    console.error('Error updating poll:', err);
+    res.status(500).json({ error: 'Server error while updating poll' });
+  }
 });
+
 
 //  Close a poll manually (Admin only)
 router.patch('/close/:pollId', authMiddleware, adminMiddleware, async (req, res) => {
@@ -120,14 +146,27 @@ router.patch('/close/:pollId', authMiddleware, adminMiddleware, async (req, res)
   res.send('Poll closed');
 });
 
-//  Delete a poll (Admin only)
+
+
+// DELETE /polls/:pollId - Only the admin who created the poll can delete it
 router.delete('/:pollId', authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const poll = await Poll.findByIdAndDelete(req.params.pollId);
-    if (!poll) return res.status(404).json({ error: 'Poll not found' });
+    const poll = await Poll.findById(req.params.pollId);
+
+    if (!poll) {
+      return res.status(404).json({ error: 'Poll not found' });
+    }
+
+    // Check if current admin is the one who created the poll
+    if (poll.createdBy.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized: You can only delete your own polls' });
+    }
+
+    await poll.deleteOne();
+
     res.json({ message: 'Poll deleted successfully' });
   } catch (err) {
-    console.error(err);
+    console.error('Delete error:', err);
     res.status(500).json({ error: 'Server error while deleting poll' });
   }
 });
@@ -191,6 +230,8 @@ router.get('/:pollId', authMiddleware, async (req, res) => {
   if (!poll) return res.status(404).json({ error: 'Poll not found' });
   res.json(poll);
 });
+
+module.exports = router;
 
 
 

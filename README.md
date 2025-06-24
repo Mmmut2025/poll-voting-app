@@ -80,7 +80,10 @@ router.post('/login', async (req, res) => {
   res.json({ token, role: user.role });
 });
 
-// Create Poll
+
+// ===================== ADMIN Routes ===================== //
+
+// Create a new poll (Admin only)
 router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
   const { question, options, closingDate } = req.body;
   if (options.length < 2) return res.status(400).send('At least 2 options required');
@@ -89,84 +92,104 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
   res.json(poll);
 });
 
-
-// Get open polls
-router.get('/', authMiddleware, async (req, res) => {
-  const polls = await Poll.find({ isClosed: false, closingDate: { $gte: new Date() } });
+//  Get all polls (Admin only)
+router.get('/admin/all', authMiddleware, adminMiddleware, async (req, res) => {
+  const polls = await Poll.find();
   res.json(polls);
 });
 
-// View results BY admin
-router.get('/admin/all', authMiddleware, async (req, res) => {
-  console.log("Inside /admin/all");
-  const poll = await Poll.find();
+//  Update a poll (Admin only)
+router.put('/:pollId', authMiddleware, adminMiddleware, async (req, res) => {
+  const { question, options, closingDate } = req.body;
+  if (options.length < 2) return res.status(400).send('At least 2 options required');
+
+  const poll = await Poll.findById(req.params.pollId);
+  if (!poll) return res.status(404).json({ error: 'Poll not found' });
+
+  poll.question = question;
+  poll.options = options;
+  poll.closingDate = closingDate;
+
+  await poll.save();
   res.json(poll);
 });
 
-// Get open polls by id
-router.get('/:pollId', authMiddleware, async (req, res) => {
-  const polls = await Poll.findById(req.params.pollId);
+//  Close a poll manually (Admin only)
+router.patch('/close/:pollId', authMiddleware, adminMiddleware, async (req, res) => {
+  const poll = await Poll.findByIdAndUpdate(req.params.pollId, { isClosed: true });
+  res.send('Poll closed');
+});
+
+//  Delete a poll (Admin only)
+router.delete('/:pollId', authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const poll = await Poll.findByIdAndDelete(req.params.pollId);
+    if (!poll) return res.status(404).json({ error: 'Poll not found' });
+    res.json({ message: 'Poll deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error while deleting poll' });
+  }
+});
+
+
+// ===================== USER Routes ===================== //
+
+// Get open polls (visible to all logged-in users)
+router.get('/', authMiddleware, async (req, res) => {
+  const polls = await Poll.find({
+    isClosed: false,
+    closingDate: { $gte: new Date() }
+  });
   res.json(polls);
 });
 
-// Vote
+//  Get closed polls (results view for users) — Must be placed BEFORE dynamic :pollId
+router.get('/closed', authMiddleware, async (req, res) => {
+  try {
+    const now = new Date();
+    const closedPolls = await Poll.find({ closingDate: { $lt: now } });
+
+    res.json(closedPolls);
+  } catch (err) {
+    console.error('Error fetching closed polls:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+//  Vote on a poll
 router.post('/vote/:pollId', authMiddleware, async (req, res) => {
   const { optionIndex } = req.body;
   const poll = await Poll.findById(req.params.pollId);
-  if (!poll || poll.isClosed || poll.closingDate < new Date()) return res.status(400).send('Poll closed');
 
-  if (poll.voters.includes(req.user.id)) return res.status(403).send('Already voted');
+  if (!poll || poll.isClosed || poll.closingDate < new Date())
+    return res.status(400).send('Poll closed');
+
+  if (poll.voters.includes(req.user.id))
+    return res.status(403).send('Already voted');
+
   poll.options[optionIndex].votes += 1;
   poll.voters.push(req.user.id);
   await poll.save();
   res.send('Vote cast');
 });
 
-// View results
+//  View poll results (only if user has voted & poll is closed)
 router.get('/results/:pollId', authMiddleware, async (req, res) => {
   const poll = await Poll.findById(req.params.pollId);
-  if (!poll || !poll.voters.includes(req.user.id)) return res.status(403).send('Not authorized');
-  if (!poll.isClosed && poll.closingDate > new Date()) return res.status(403).send('Poll still open');
+  if (!poll || !poll.voters.includes(req.user.id))
+    return res.status(403).send('Not authorized');
+  if (!poll.isClosed && poll.closingDate > new Date())
+    return res.status(403).send('Poll still open');
+
   res.json(poll.options);
 });
 
-// Admin: Close poll manually
-router.patch('/close/:pollId', authMiddleware, adminMiddleware, async (req, res) => {
-  const poll = await Poll.findByIdAndUpdate(req.params.pollId, { isClosed: true });
-  res.send('Poll closed');
-});
-
-// update Poll
-router.put('/:pollId', authMiddleware, adminMiddleware, async (req, res) => {
-  console.log('req',req.params.pollId)
-  const { question, options, closingDate } = req.body;
-  if (options.length < 2) return res.status(400).send('At least 2 options required');
+//  Get a single poll by ID — must be last to avoid catching /closed or /results
+router.get('/:pollId', authMiddleware, async (req, res) => {
   const poll = await Poll.findById(req.params.pollId);
-    if (!poll) return res.status(404).json({ error: 'Poll not found' });
-
-    // Update fields
-    poll.question = question;
-    poll.options = options;
-    poll.closingDate = closingDate;
-
-    await poll.save();
-    res.json(poll);
-});
-
-// delete 
-router.delete('/:pollId', authMiddleware, adminMiddleware, async (req, res) => {
-  try {
-    const poll = await Poll.findByIdAndDelete(req.params.pollId);
-
-    if (!poll) {
-      return res.status(404).json({ error: 'Poll not found' });
-    }
-
-    res.json({ message: 'Poll deleted successfully' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error while deleting poll' });
-  }
+  if (!poll) return res.status(404).json({ error: 'Poll not found' });
+  res.json(poll);
 });
 
 

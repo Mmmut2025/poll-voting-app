@@ -6,39 +6,39 @@ Folder Structure
   /frontend   → React client app
   /backend    → Node.js + Express API
 
-Prerequisites
+Prerequisites: 
   Node.js and npm installed
   MongoDB instance running (local or cloud like MongoDB Atlas)
 
 Backend Setup (Node.js + Express)
-1. Open terminal and go to the backend folder
+1. Open terminal and go to the backend folder:
    cd backend
 
 2. Install dependencies:
    npm install
    
 4. Create a .env file:
-   MONGO_URI=your_mongodb_connection_string
+   MONGO_URI=your_mongodb_connection_string ,
    JWT_SECRET=your_secret_key
    
-5. Start the backend server
+5. Start the backend server:
    npx nodemon server.js
 
 
 Frontend Setup
-1. Go to the Main directory
+1. Go to the Main directory:
    cd..
 
-2. create react app inside frontend dir
+2. create react app inside frontend dir:
    npm create vite@latest frontend -- --template react
 
-3. Go to the Frontend dir
+3. Go to the Frontend dir:
    cd frontend
 
 4. Install dependencies:
    npm install
 
-5. Start the frontend server
+5. Start the frontend server:
    npm run dev
 
 
@@ -59,6 +59,7 @@ Tailwind CSS / Inline CSS:- 	For responsive and clean UI without external CSS fi
 
 
 API endpoints list with HTTP method, route, and purpose:-
+//For Login
 router.post('/signup', async (req, res) => {
   const { name, email, password, role } = req.body;
   const hashed = await bcrypt.hash(password, 10);
@@ -68,6 +69,7 @@ router.post('/signup', async (req, res) => {
   res.send('User registered');
 });
 
+//For Logout
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });

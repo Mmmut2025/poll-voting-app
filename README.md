@@ -60,6 +60,7 @@ Tailwind CSS / Inline CSS:- 	For responsive and clean UI without external CSS fi
 
 API endpoints list with HTTP method, route, and purpose:-
 //For SignUp
+
 router.post('/signup', async (req, res) => {
   const { name, email, password, role } = req.body;
   const hashed = await bcrypt.hash(password, 10);
@@ -70,6 +71,7 @@ router.post('/signup', async (req, res) => {
 });
 
 //For Login
+
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
@@ -81,11 +83,6 @@ router.post('/login', async (req, res) => {
 });
 
 
-const express = require('express');
-const Poll = require('../models/Poll');
-const { authMiddleware, adminMiddleware } = require('../middleware/authMiddleware');
-
-const router = express.Router();
 
 // ===================== ADMIN Routes ===================== //
 
